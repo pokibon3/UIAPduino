@@ -1,4 +1,4 @@
-# CW Decoder for UIAPduino 
+# UIAPduino Sample Programs
 
 UIAP Pro Microで動作するサンプルプログラムです。  
 ビルド環境はVSCode + ch32v003funが必要です。  
@@ -12,7 +12,13 @@ UIAP Pro Microで動作するサンプルプログラムです。
 - V1.0  
 ・ 新規リリース
 
-■ ライセンス
+## uiap_cwtx
+SI5351aをI2C接続することにより、7.014MhzのCW送信機として動作します。
+
+## uiap_sideToneDDS
+700Hzのサイドトーン信号をPWMで出力するプログラム
+CRフィルタをかけることにより、SIN WAVEを発生できます。
+
+
+# ライセンス
 This project is licensed under the MIT License, see the LICENSE.txt file for details
-
-
