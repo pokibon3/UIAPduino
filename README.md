@@ -15,9 +15,13 @@ UIAP Pro Microで動作するサンプルプログラムです。
 ## uiap_cwtx
 SI5351aをI2C接続することにより、7.014MhzのCW送信機として動作します。
 
-## uiap_sideToneDDS
-700Hzのサイドトーン信号をPWMで出力するプログラム
-CRフィルタをかけることにより、SIN WAVEを発生できます。
+■ 変更履歴
+- V0.1
+・ テストリリース
+
+
+## uiap_arduino_i2c_scanner  
+UIAPduinoのI2Cに接続されたデバイスをシリアルコンソールに表示します。
 
 
 # ライセンス
