@@ -36,58 +36,92 @@ static void format_freq(char* out, size_t out_len, uint32_t hz)
 	         (unsigned long)mhz, (unsigned long)khz, (unsigned long)hz_rem);
 }
 
+struct LayoutSpec {
+	const char* header_text;
+	uint8_t header_scale;
+	uint8_t footer_scale;
+	uint16_t header_h;
+	uint16_t footer_h;
+	uint16_t margin;
+	uint16_t pad_x;
+	uint16_t pad_y;
+};
+
+static LayoutSpec get_layout_spec()
+{
+	const uint8_t font_h = 8;
+	LayoutSpec spec{};
+#if defined(TFT_ST7735)
+	spec.header_text = "7MHz CW TX";
+	spec.header_scale = 1;
+	spec.footer_scale = 1;
+	spec.header_h = (uint16_t)(font_h * spec.header_scale + 4);
+	spec.footer_h = (uint16_t)(font_h * spec.footer_scale + 3);
+	spec.margin = 2;
+	spec.pad_x = 3;
+	spec.pad_y = 5;
+#else
+	spec.header_text = kHeaderText;
+	spec.header_scale = 2;
+	spec.footer_scale = 1;
+	spec.header_h = 20;
+	spec.footer_h = (uint16_t)(font_h * spec.footer_scale + 4);
+	spec.margin = 4;
+	spec.pad_x = 4;
+	spec.pad_y = 8;
+#endif
+	return spec;
+}
+
 static void draw_header()
 {
 	const uint8_t font_w = 6;
 	const uint8_t font_h = 8;
-	const uint8_t header_scale = 2;
-	const uint16_t header_h = 20;
-	const uint8_t header_char_w = (uint8_t)(font_w * header_scale);
-	const uint16_t header_x = (TFT_WIDTH - (uint16_t)(strlen(kHeaderText) * header_char_w)) / 2;
-	const uint16_t header_y = (uint16_t)((header_h - (font_h * header_scale)) / 2);
+	const LayoutSpec spec = get_layout_spec();
+	const uint8_t header_char_w = (uint8_t)(font_w * spec.header_scale);
+	const uint16_t text_w = (uint16_t)(strlen(spec.header_text) * header_char_w);
+	const uint16_t header_x = (text_w > TFT_WIDTH) ? 0 : (TFT_WIDTH - text_w) / 2;
+	const uint16_t header_y = (uint16_t)((spec.header_h - (font_h * spec.header_scale)) / 2);
 
-	tft_fill_rect(0, 0, TFT_WIDTH, header_h, DARKBLUE);
+	tft_fill_rect(0, 0, TFT_WIDTH, spec.header_h, DARKBLUE);
 	tft_set_color(YELLOW);
 	tft_set_cursor(header_x, header_y);
-	tft_print(kHeaderText, header_scale);
-	tft_draw_line(0, header_h, TFT_WIDTH - 1, header_h, SKYBLUE);
+	tft_print(spec.header_text, spec.header_scale);
+	tft_draw_line(0, spec.header_h, TFT_WIDTH - 1, spec.header_h, SKYBLUE);
 }
 
 static void draw_step_line()
 {
 	const uint8_t font_w = 6;
 	const uint8_t font_h = 8;
-	const uint8_t footer_scale = 1;
-	const uint16_t footer_h = (uint16_t)(font_h * footer_scale + 4);
-	const uint16_t footer_y = (uint16_t)(TFT_HEIGHT - footer_h);
+	const LayoutSpec spec = get_layout_spec();
+	const uint16_t footer_y = (uint16_t)(TFT_HEIGHT - spec.footer_h);
 	const char* step_text = g_step_fine ? "STEP:FINE" : "STEP:NORMAL";
-	const uint16_t text_w = (uint16_t)(strlen(step_text) * font_w * footer_scale);
+	const uint16_t text_w = (uint16_t)(strlen(step_text) * font_w * spec.footer_scale);
 	const uint16_t text_x = (TFT_WIDTH - text_w) / 2;
-	const uint16_t text_y = (uint16_t)(footer_y + (footer_h - (font_h * footer_scale)) / 2);
+	const uint16_t text_y = (uint16_t)(footer_y + (spec.footer_h - (font_h * spec.footer_scale)) / 2);
 
-	tft_fill_rect(0, footer_y, TFT_WIDTH, footer_h, DARKGREEN);
+	tft_fill_rect(0, footer_y, TFT_WIDTH, spec.footer_h, DARKGREEN);
 	tft_set_color(WHITE);
 	tft_set_cursor(text_x, text_y);
-	tft_print(step_text, footer_scale);
+	tft_print(step_text, spec.footer_scale);
 }
 
 static void draw_frequency_box()
 {
 	const uint8_t font_w = 6;
 	const uint8_t font_h = 8;
-	const uint16_t header_h = 20;
-	const uint16_t footer_h = (uint16_t)(font_h + 4);
-	const uint16_t margin = 4;
-	const uint16_t pad_x = 4;
-	const uint16_t pad_y = 8;
+	const LayoutSpec spec = get_layout_spec();
+	const uint16_t extra_pad_x = 10;
+	const uint16_t extra_pad_y = 5;
 	char freq_text[16];
 
 	format_freq(freq_text, sizeof(freq_text), g_freq_hz);
 
-	const uint16_t avail_w = (uint16_t)(TFT_WIDTH - (margin * 2));
-	const uint16_t avail_h = (uint16_t)(TFT_HEIGHT - header_h - footer_h - (margin * 2));
+	const uint16_t avail_w = (uint16_t)(TFT_WIDTH - (spec.margin * 2));
+	const uint16_t avail_h = (uint16_t)(TFT_HEIGHT - spec.header_h - spec.footer_h - (spec.margin * 2));
 	uint8_t max_scale_w = (uint8_t)(avail_w / (uint16_t)(strlen(freq_text) * font_w));
-	uint8_t max_scale_h = (uint8_t)((avail_h - (pad_y * 2)) / font_h);
+	uint8_t max_scale_h = (uint8_t)((avail_h - ((spec.pad_y + extra_pad_y) * 2)) / font_h);
 	uint8_t freq_scale = (max_scale_w < max_scale_h) ? max_scale_w : max_scale_h;
 	if (freq_scale < 1) {
 		freq_scale = 1;
@@ -98,12 +132,12 @@ static void draw_frequency_box()
 
 	const uint16_t freq_w = (uint16_t)(strlen(freq_text) * font_w * freq_scale);
 	const uint16_t freq_h = (uint16_t)(font_h * freq_scale);
-	const uint16_t box_w = (uint16_t)(freq_w + (pad_x * 2));
-	const uint16_t box_h = (uint16_t)(freq_h + (pad_y * 2));
+	const uint16_t box_w = (uint16_t)(freq_w + ((spec.pad_x + extra_pad_x) * 2));
+	const uint16_t box_h = (uint16_t)(freq_h + ((spec.pad_y + extra_pad_y) * 2));
 	const uint16_t box_x = (TFT_WIDTH - box_w) / 2;
-	const uint16_t box_y = (uint16_t)(header_h + margin + (avail_h - box_h) / 2);
-	const uint16_t freq_x = (uint16_t)(box_x + pad_x);
-	const uint16_t freq_y = (uint16_t)(box_y + pad_y);
+	const uint16_t box_y = (uint16_t)(spec.header_h + spec.margin + (avail_h - box_h) / 2);
+	const uint16_t freq_x = (uint16_t)(box_x + spec.pad_x + extra_pad_x);
+	const uint16_t freq_y = (uint16_t)(box_y + spec.pad_y + extra_pad_y);
 
 	tft_fill_rect(box_x, box_y, box_w, box_h, NAVY);
 	tft_draw_rect(box_x, box_y, box_w, box_h, CYAN);
