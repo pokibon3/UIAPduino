@@ -19,6 +19,10 @@ SI5351aをI2C接続することにより、7Mhz帯のCW送信機として動作�
 - V0.1  
 ・ テストリリース
 
+## ch32v_morse2_arduino_ide
+CW固定メッセージを連続送信します。
+ビルド環境はArduino IDEです。
+
 
 ## UIAP_Arduino_I2C_Scanner  
 UIAPduinoのI2Cに接続されたデバイスをシリアルコンソールに表示します。
